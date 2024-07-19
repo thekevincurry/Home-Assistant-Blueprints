@@ -1,0 +1,31 @@
+blueprint:
+  name: Leak detector battery notifier
+  description: Send a notification when any configured leak detector's battery is low
+  domain: automation
+  input:
+    notify_device:
+      name: Notify device
+      description: "The device where the notification should be sent to."
+      selector:
+        device:
+          integration: mobile_app
+
+trigger:
+  - platform: state
+    entity_id: all
+    attribute: battery_level
+
+condition:
+  - condition: template
+    value_template: '{{ trigger.entity_id.startswith("binary_sensor") and "leak" in trigger.entity_id }}'
+  - condition: template
+    value_template: '{{ trigger.to_state.state | int < 20 }}'
+
+action:
+  domain: mobile_app
+  type: notify
+  device_id: !input notify_device
+  message: "Battery low: {{ trigger.to_state.attributes.friendly_name }} ({{ trigger.to_state.state }}%)"
+  title: "Low Battery Warning"
+
+mode: single
