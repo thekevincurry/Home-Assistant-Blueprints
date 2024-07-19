@@ -1,0 +1,40 @@
+blueprint:
+  name: Leak Notifier Sonos
+  description: Send a notification to Sonos when any configured moisture sensor becomes moist
+  domain: automation
+
+trigger:
+  - platform: state
+    entity_id: 
+      - sensor.leak_detector_aquarium
+      - sensor.leak_detector_bar_sink
+      - sensor.leak_detector_basement_bath
+      - sensor.leak_detector_dishwasher
+      - sensor.leak_detector_kid_bath
+      - sensor.leak_detector_kitchen_sink
+      - sensor.leak_detector_master_bath
+      - sensor.leak_detector_mudroom_sink
+      - sensor.leak_detector_powder_room
+      - sensor.leak_detector_utility_room
+      - sensor.leak_detector_washing_machine
+    to: 'on'
+
+condition:
+  - condition: template
+    value_template: '{{ trigger.to_state.attributes.device_class == "moisture" }}'
+  - condition: template
+    value_template: '{{ trigger.to_state.state == "on" }}'
+
+action:
+  - service: tts.google_translate_say
+    data:
+      entity_id:
+        - media_player.garage
+        - media_player.kitchen
+        - media_player.mudroom
+        - media_player.master_bedroom
+        - media_player.office
+        - media_player.patio
+      message: "{{ trigger.to_state.attributes.friendly_name }} has detected a leak. {{ trigger.to_state.attributes.friendly_name }} has detected a leak."
+
+mode: single
