@@ -1,39 +1,31 @@
 blueprint:
-  name: Enhanced Leak Detection & Notifier
-  description: Send a notification when any configured moisture sensor detects a leak.
+  name: Leak detection & notifier
+  description: Send a notification when any configured moisture sensor becomes moist
   domain: automation
   input:
-    moisture_sensors:
-      name: Moisture Sensors
-      description: "Select moisture sensors to monitor."
-      selector:
-        entity:
-          domain: binary_sensor
-          device_class: moisture
     notify_device:
-      name: Notify Device
-      description: "The device where the notification should be sent."
+      name: Notify device
+      description: "The device where the notification should be sent to."
       selector:
         device:
           integration: mobile_app
 
 trigger:
-  - platform: state
-    entity_id: !input moisture_sensors
-    to: "on"
-    attribute: device_class
+  - event_data: {}
+    event_type: state_changed
+    platform: event
 
 condition:
   - condition: template
-    value_template: "{{ state_attr(trigger.entity_id, 'device_class') == 'moisture' }}"
+    value_template: '{{ trigger.event.data.new_state.attributes.device_class == "moisture" }}'
+  - condition: template
+    value_template: '{{ trigger.event.data.new_state.state == "on" }}'
 
 action:
-  - alias: "Send Notification"
-    domain: mobile_app
-    type: notify
-    device_id: !input notify_device
-    message: >
-      {{ state_attr(trigger.entity_id, 'friendly_name') | default('A sensor') }} detected a leak at {{ now().strftime('%Y-%m-%d %H:%M:%S') }}.
-    title: "Leak Detected!"
+  domain: mobile_app
+  type: notify
+  device_id: !input notify_device
+  message: "{{ trigger.event.data.new_state.attributes.friendly_name }} has detected a leak."
+  title: "Leak detected!"
 
 mode: single
